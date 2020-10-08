@@ -1,6 +1,9 @@
 # voxelize
 
 Compile:
+You'll need the Eigen header files (http://eigen.tuxfamily.org/),
+and you'll need to adapt the script compile.sh to reflect the location
+of these header files.
 ```shell
 module load hdf5/intel-17.0/1.10.0
 sh compile.sh
@@ -29,7 +32,7 @@ with the following command line-arguments
 * INPUT_PREFIX: (str) It is assumed that the input simulation files have the filenames
                       INPUT_PREFIX\<n\>.hdf5, where n is an index ranging from 0 to NCHUNKS-1
 * OUTPUT_PREFIX: (str) The output files will be written in the format
-                       OUTPUT_PREFIX_<i>_<j>_<k> where i,j,k run from 0 to NSUBBOXES-1.
+                       OUTPUT_PREFIX_\<i\>_\<j\>_\<k\> where i,j,k run from 0 to NSUBBOXES-1.
                        These files are binary files in row-major (C) order, covering a cubical
                        sub-box of the original simulation box.
                        Note that the data is single precision, so if reading from numpy you need to
@@ -41,7 +44,7 @@ with the following command line-arguments
 * NSUBBOXES: (int) if set to 1, only a single output file is produced.
                    If working with large boxes or at high resolution, it may be convenient to split the
                    output into smaller files.
-                   This can be accomplished by setting NSUBBOXES to non-zero.
+                   This can be accomplished by setting NSUBBOXES to larger than 1.
                    In that case, NSUBBOXES^3 output files will be produced,
                    each corresponding to a cube of sidelength NSIDE/NSUBBOXES
                    (note that NSUBBOXES should divide NSIDE without remainder).
