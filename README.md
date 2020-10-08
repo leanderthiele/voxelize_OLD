@@ -37,7 +37,7 @@ with the following command line-arguments
                        These files are binary files in row-major (C) order, covering a cubical
                        sub-box of the original simulation box.
                        Note that the data is single precision, so if reading from numpy you need to
-                       call np.fromfile(<fname>, dtype=np.float32)
+                       call np.fromfile(\<fname\>, dtype=np.float32)
 * NCHUNKS: (int) number of simulation chunks (see INPUT_PREFIX)
 * BOX_SIZE: (float) sidelength of the simulation box, in the same units the particle coordinates are given
                     in (I think it's kpc/h for Illustris).
