@@ -22,8 +22,6 @@
 #define OVERLAP_HPP
 
 // Eigen
-//#include <Eigen/Core>
-//#include <Eigen/Geometry>
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 

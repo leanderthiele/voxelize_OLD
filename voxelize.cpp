@@ -13,7 +13,7 @@ using std::exception;
 #include <math.h>
 #include <omp.h>
 #include "H5Cpp.h"
-#include "/home/lthiele/Overlaps/overlap/overlap_lft.hpp"
+#include "overlap_lft.hpp"
 
 // Physical constants
 #define KBOLTZM (1.3806485e-16)        // cgs
@@ -24,23 +24,12 @@ using std::exception;
 #define MPROTON (1836.15267343)        // in electron masses
 
 // particle types
-#define GAS 0 // electron pressure
-#define DM  1 // DM density
-#define NE  2 // electron number density
-#define MOMDM 3 // dark matter momentum
+#define GAS    0 // electron pressure
+#define DM     1 // DM density
+#define NE     2 // electron number density
+#define MOMDM  3 // dark matter momentum
 #define MOMGAS 4 // electron momentum density
-#define VELDM 5 // dark matter velocity
-
-// mode types
-#define FILL 0
-#define PAINT 1
-
-#define MMIN 1000.0f // minimum halo mass to consider (in 1e10 Msun/h)
-#define ROUT_SCALE 3.0f // in terms of Rvir
-
-// box size
-#define RESOLUTION 1024
-#define NSUBBOXES  2
+#define VELDM  5 // dark matter velocity
 
 using namespace H5;
 
@@ -130,7 +119,7 @@ struct Field
     // reads the complete field to memory
     {
         this->memspace = new DataSpace(this->Ndims, this->dim_lengths, NULL);
-        int Nvalues = 1;
+        long int Nvalues = 1;
         for (int ii=0; ii<Ndims; ii++) { Nvalues *= this->dim_lengths[ii]; }
         try
         {
@@ -143,7 +132,7 @@ struct Field
         }
         this->dataset->read(this->values, PredType::NATIVE_FLOAT, *this->memspace, *this->dataspace);
     }
-    float &operator[] (const int index) const
+    float &operator[] (const long int index) const
     // overload the array index operator for convenience
     {
         return this->values[index];
@@ -158,71 +147,6 @@ struct Field
     hsize_t dim_lengths[10]; // there is no dataset with more than 10 dims
     float *values;
     int occupies_memory;
-};//}}}
-
-struct Cosmology
-{//{{{
-    Cosmology(const float OM, const float OL, const float OB, const float h)
-    {
-        this->OM = OM;
-        this->OL = OL;
-        this->OB = OB;
-        this->h  = h;
-    }
-    float rho_c (const float a) const
-    {
-        return 2.775e-8f * (this->OM/a/a/a + this->OL);
-        // 1e10 Msun/h / (kpc/h)^3
-    }
-    float OM;
-    float OL;
-    float OB;
-    float h;
-};//}}}
-
-struct Halo
-// A single halo
-{//{{{
-    Halo(const float *Mvir, const float *Rvir, const double *a)
-    {
-        // NFW + Duffy 08
-        float cvir = 7.85f * powf(*Mvir/200.0f, 0.081f) * powf((float)(*a), 0.71f);
-        this->Rs   = *Rvir/cvir;
-        this->rho0 = *Mvir/4.0f/M_PI/this->Rs/this->Rs/this->Rs/(log1p(cvir) - cvir/(1.0f+cvir));
-        this->Rout = ROUT_SCALE * *Rvir;
-        this->profile = &Halo::density;
-        this->M = *Mvir;
-    }
-    Halo(const Cosmology *C, const float *Mvir, const float *M200c, const float *R200c, const float *Rvir, const double *a)
-    {
-        // Battaglia+2012
-        this->P200c = 100.0f * GNEWTON * *M200c * C->rho_c((float)(*a)) * C->OB / C->OM / *R200c;
-        this->Pi0   = 18.1f  * powf((*M200c/1e4f/C->h), 0.154f)    * powf((float)(*a), 0.758f);
-        this->Rc    = 0.497f * powf((*M200c/1e4f/C->h), -0.00865f) * powf((float)(*a), -0.731f) * *R200c;
-        this->beta  = 4.35f  * powf((*M200c/1e4f/C->h), 0.0393f)   * powf((float)(*a), -0.415f);
-        this->Rout  = ROUT_SCALE * *Rvir;
-        this->profile = &Halo::pressure;
-        this->M = *Mvir;
-    }
-    float density(float r) const
-    {
-        if (r > this->Rout) { return 0.0f; }
-        return this->rho0/(r/this->Rs)/(1.0f+r/this->Rs)/(1.0f+r/this->Rs);
-    }
-    float pressure(float r) const
-    {
-        if (r > this->Rout) { return 0.0f; }
-        return this->P200c*this->Pi0*powf(r/this->Rc, -0.3f)/powf(1.0f+r/this->Rc, this->beta);
-    }
-    float M;
-    float Rout;
-    float Rs;
-    float rho0;
-    float P200c;
-    float Pi0;
-    float Rc;
-    float beta;
-    float (Halo::*profile)(float) const;
 };//}}}
 
 struct Box
@@ -288,18 +212,14 @@ struct Box
             +                       ((this->Nside+zz%this->Nside)%this->Nside)
             ];
     }//}}}
-    void fill_box(const int Nspheres, const float *sphere_centres,
-              const float *sphere_radii, const float *sphere_weights)
+    void fill_box(const long int Nspheres, const float *sphere_centres,
+                  const float *sphere_radii, const float *sphere_weights)
     {//{{{
         #pragma omp parallel for
-        for (int ii=0; ii<Nspheres; ii++)
+        for (long int ii=0; ii<Nspheres; ii++)
         {
             long long int xx_min, yy_min, zz_min;
             long long int xx_max, yy_max, zz_max;
-//          if ((ii+1)%1000000 == 0)
-//          {
-//              cout << (ii+1)/1000000 << " out of " << (int)ceil(Nspheres/1000000) << endl;
-//          }
             index_at_position(sphere_centres[3*ii+0]+sphere_radii[ii],
                               sphere_centres[3*ii+1]+sphere_radii[ii],
                               sphere_centres[3*ii+2]+sphere_radii[ii],
@@ -366,58 +286,6 @@ struct Box
             }
         }
     }//}}}
-    void paint_halos(const int Nhalos, const float *halo_centres, Halo **h, const int Nsample, const float Mmin)
-    {//{{{
-        #pragma omp parallel for
-        for (int ii=0; ii<Nhalos; ii++)
-        {
-            if (h[ii]->M < Mmin) { continue; }
-            long long int xx_min, yy_min, zz_min;
-            long long int xx_max, yy_max, zz_max;
-            index_at_position(halo_centres[3*ii+0]+h[ii]->Rout,
-                              halo_centres[3*ii+1]+h[ii]->Rout,
-                              halo_centres[3*ii+2]+h[ii]->Rout,
-                              &xx_max, &yy_max, &zz_max);
-            index_at_position(halo_centres[3*ii+0]-h[ii]->Rout,
-                              halo_centres[3*ii+1]-h[ii]->Rout,
-                              halo_centres[3*ii+2]-h[ii]->Rout,
-                              &xx_min, &yy_min, &zz_min);
-            for (long long int xx=xx_min; xx<=xx_max; xx++)
-            {
-                for (long long int yy=yy_min; yy<=yy_max; yy++)
-                {
-                    for (long long int zz=zz_min; zz<=zz_max; zz++)
-                    {
-                        float this_value = 0.0f;
-                        for (int small_xx=-Nsample; small_xx<=Nsample; small_xx++)
-                        {
-                            for (int small_yy=-Nsample; small_yy<=Nsample; small_yy++)
-                            {
-                                for (int small_zz=-Nsample; small_zz<=Nsample; small_zz++)
-                                {
-                                    float xpos = ((float)(xx)+0.5f+(float)(small_xx)/(float)(2*Nsample+1))*this->a;
-                                    float ypos = ((float)(yy)+0.5f+(float)(small_yy)/(float)(2*Nsample+1))*this->a;
-                                    float zpos = ((float)(zz)+0.5f+(float)(small_zz)/(float)(2*Nsample+1))*this->a;
-                                    float r = std::sqrt(
-                                            (halo_centres[3*ii+0]-xpos)*(halo_centres[3*ii+0]-xpos)
-                                            + (halo_centres[3*ii+1]-ypos)*(halo_centres[3*ii+1]-ypos)
-                                            + (halo_centres[3*ii+2]-zpos)*(halo_centres[3*ii+2]-zpos)
-                                            );
-                                    this_value += ((h[ii]->*(h[ii]->profile))(r)
-                                                   /(float)((2*Nsample+1)*(2*Nsample+1)*(2*Nsample+1)));
-                                }
-                            }
-                        }
-                        if (this_value > this->get(xx, yy, zz))
-                        {
-                            this->set(this_value, xx, yy, zz);
-                        }
-                    }
-                }
-            }
-
-        }
-    }//}}}
     void save_to_file(string name, long long int fraction)
     // produces fraction^3 individual files, each is a separate cube
     {//{{{
@@ -447,82 +315,7 @@ struct Box
     float a;
 };//}}}
 
-void box_painting(Box *b, int PTYPE, int Nchunks)
-{//{{{
-    Cosmology *C;
-    C = new Cosmology(0.3086, 0.6911, 0.0486, 0.6774);
-
-    for (int chunk=0; chunk<Nchunks; chunk++)
-    {
-        cout << "Chunk Nr " << (chunk+1) << " out of " << Nchunks << endl;
-        SimChunk *g;
-        if (PTYPE == GAS)
-        {
-            g = new SimChunk("/tigress/lthiele/Illustris_300-1_TNG/output/groups_099/fof_subhalo_tab_099."+to_string(chunk)+".hdf5");
-        }
-        else if (PTYPE == DM)
-        {
-            g = new SimChunk("/tigress/lthiele/Illustris_300-1_Dark/output/groups_099/fof_subhalo_tab_099."+to_string(chunk)+".hdf5");
-        }
-        else
-        {
-            cout << "Unsupported particle type for mode FILL. Aborting.\n" << endl;
-            exit(-1);
-        }
-        int Ngroups;
-        g->get_header_field("Ngroups_ThisFile", &Ngroups);
-        if (Ngroups == 0)
-        {
-            delete g;
-            continue;
-        }
-        double a;
-        g->get_header_field("Time", &a);
-        Field coords = Field(g, "Group/GroupPos");
-        coords.read_to_memory();
-        Halo **h;
-        h = new Halo*[Ngroups];
-        if (PTYPE == GAS)
-        {
-            Field Mvir = Field(g, "Group/Group_M_TopHat200");
-            Mvir.read_to_memory();
-            Field M200c = Field(g, "Group/Group_M_Crit200");
-            M200c.read_to_memory();
-            Field R200c = Field(g, "Group/Group_R_Crit200");
-            R200c.read_to_memory();
-            Field Rvir = Field(g, "Group/Group_R_TopHat200");
-            Rvir.read_to_memory();
-            // TODO comoving vs physical --> Halo takes physical I believe
-            for (int ii=0; ii<Ngroups; ii++)
-            {
-                h[ii] = new Halo(C, Mvir.values+ii, M200c.values+ii, R200c.values+ii, Rvir.values+ii, &a);
-            }
-        }
-        else if (PTYPE == DM)
-        {
-            Field Mvir = Field(g, "Group/Group_M_TopHat200");
-            Mvir.read_to_memory();
-            Field Rvir = Field(g, "Group/Group_R_TopHat200");
-            Rvir.read_to_memory();
-            for (int ii=0; ii<Ngroups; ii++)
-            {
-                h[ii] = new Halo(Mvir.values+ii, Rvir.values+ii, &a);
-            }
-        }
-
-        b->paint_halos(Ngroups, coords.values, h, 1, MMIN);
-        // paint only halos with Mvir > 1e8 Msun/h
-
-        for (int ii=0; ii<Ngroups; ii++)
-        {
-            delete h[ii];
-        }
-        delete[] h;
-        delete g;
-    }
-}//}}}
-
-void box_filling(Box *b, int PTYPE, int Nchunks, int axis = -1)
+void box_filling(Box *b, string INPUT_PREFIX, int PTYPE, int NCHUNKS, int axis = -1)
 {//{{{
     if ((PTYPE==MOMDM) || (PTYPE==VELDM) || (PTYPE==MOMGAS))
     {
@@ -532,26 +325,20 @@ void box_filling(Box *b, int PTYPE, int Nchunks, int axis = -1)
             return;
         }
     }
+
     // loop over manageable chunks
-    for (int chunk=0; chunk<Nchunks; chunk++)
+    for (int chunk=0; chunk<NCHUNKS; chunk++)
     {
-        cout << "Chunk Nr " << (chunk+1) << " out of " << Nchunks << endl;
+        cout << "Chunk Nr " << (chunk+1) << " out of " << NCHUNKS << endl;
         SimChunk *s;
-        if ((PTYPE==GAS) || (PTYPE==NE) || (PTYPE==MOMGAS))
-        {
-            s = new SimChunk("/tigress/lthiele/Illustris_300-1_TNG/output/snapdir_099/snap_099."+to_string(chunk)+".hdf5");
-        }
-        else if ((PTYPE==DM) || (PTYPE==MOMDM) || (PTYPE==VELDM))
-        {
-            s = new SimChunk("/tigress/lthiele/Illustris_300-1_Dark/output/snapdir_099/snap_099."+to_string(chunk)+".hdf5");
-        }
+        s = new SimChunk(INPUT_PREFIX + to_string(chunk) + ".hdf5");
         
         Field coords = Field(s, PTYPE, "Coordinates");
         coords.read_to_memory();
 
-        int Nparticles = coords.dim_lengths[0];
+        long int Nparticles = coords.dim_lengths[0];
         float *radii = new float[Nparticles];
-        float *weight = new float[Nparticles]; // for GAS: electron pressure, for DM: density
+        float *weight = new float[Nparticles];
 
         // compute radii and weight
         if (PTYPE==GAS)
@@ -667,113 +454,23 @@ int main(int argc, char **argv)
     if (argc!=3) { cout << "wrong number of arguments." << endl; return -1; }
 
     cout << "Going to use " << std::getenv("OMP_NUM_THREADS") << " threads." << endl;
+
     const int PTYPE = atoi(argv[1]);
-    const int MODE  = atoi(argv[2]);
-    int Nchunks;
-    if (PTYPE==GAS)
-    {
-        cout << "Working with GAS." << endl;
-        Nchunks = 600;
-    }
-    else if (PTYPE==DM)
-    {
-        cout << "Working with DM." << endl;
-        Nchunks = 75;
-    }
-    else if (PTYPE==NE)
-    {
-        cout << "Working with NE." << endl;
-        Nchunks = 600;
-    }
-    else if (PTYPE==MOMDM)
-    {
-        cout << "Working with DM momentum density." << endl;
-        Nchunks = 75;
-    }
-    else if (PTYPE==VELDM)
-    {
-        cout << "Working with DM velocity." << endl;
-        Nchunks = 75;
-    }
-    else if (PTYPE==MOMGAS)
-    {
-        cout << "Working with GAS momentum density." << endl;
-        Nchunks = 600;
-    }
-    else
-    {
-        cout << "Ptype " << PTYPE << " not supported." << endl;
-        return -1;
-    }
+    const string INPUT_PREFIX(argv[2]);
+    const string OUTPUT_PREFIX(argv[3]);
+    const int NCHUNKS = atoi(argv[4]);
+    const float BOX_SIZE = atof(argv[5]);
+    const long long int NSIDE = atoll(argv[6]); 
+    const int NSUBBOXES = atoi(argv[7]);
+    const int AXIS = ((PTYPE==MOMDM) || (PTYPE==VELDM) || (PTYPE==MOMGAS))
+                     ? atoi(argv[8]) : -1;
 
-    const float BoxSize = 205000.0;
-    Box *b = new Box(RESOLUTION, BoxSize);
+    Box *b = new Box(NSIDE, BOX_SIZE);
 
-    if ((PTYPE == MOMDM) || (PTYPE == VELDM) ||(PTYPE == MOMGAS))
-    {
-        cout << "In mode FILL for momentum density." << endl;
-        box_filling(b, PTYPE, Nchunks, MODE);
-    }
-    else
-    {
-        if (MODE == FILL)
-        {
-            cout << "In mode FILL." << endl;
-            box_filling(b, PTYPE, Nchunks);
-        }
-        else if (MODE == PAINT)
-        {
-            cout << "In mode PAINT." << endl;
-            box_painting(b, PTYPE, Nchunks);
-        }
-        else
-        {
-            cout << "Invalid mode " << MODE << endl;
-            return -1;
-        }
-    }
+    box_filling(b, INPUT_PREFIX, PTYPE, NCHUNKS, AXIS);
 
-    if (PTYPE == GAS)
-    {
-        if (MODE == FILL)
-        {
-            b->save_to_file("/scratch/gpfs/lthiele/gas_boxes_"+to_string(RESOLUTION)+"/TEST_box_", NSUBBOXES);
-        }
-        else if (MODE == PAINT)
-        {
-            b->save_to_file("/tigress/lthiele/boxes/painted_gas_boxes_"+to_string(RESOLUTION)+"/TEST_box_", NSUBBOXES);
-        }
-    }
-    else if (PTYPE == DM)
-    {
-        if (MODE == FILL)
-        {
-            b->save_to_file("/scratch/gpfs/lthiele/DM_boxes_"+to_string(RESOLUTION)+"/TEST_box_", NSUBBOXES);
-        }
-        else if (MODE == PAINT)
-        {
-            b->save_to_file("/tigress/lthiele/boxes/painted_DM_boxes_"+to_string(RESOLUTION)+"/TEST_box_", NSUBBOXES);
-        }
-    }
-    else if (PTYPE == NE)
-    {
-        if (MODE == FILL)
-        {
-            b->save_to_file("/tigress/lthiele/boxes/NE_boxes_"+to_string(RESOLUTION)+"/TEST_box_", NSUBBOXES);
-        }
-    }
-    else if (PTYPE == MOMDM)
-    {
-        b->save_to_file("/tigress/lthiele/boxes/MOMDM_boxes_"+to_string(RESOLUTION)+"_"+to_string(MODE)+"/TEST_box_", NSUBBOXES);
-    }
-    else if (PTYPE == VELDM)
-    {
-        b->save_to_file("/tigress/lthiele/boxes/VELDM_boxes_"+to_string(RESOLUTION)+"_"+to_string(MODE)+"/TEST_box_", NSUBBOXES);
-    }
-    else if (PTYPE == MOMGAS)
-    {
-        b->save_to_file("/tigress/lthiele/boxes/MOMGAS_boxes_"+to_string(RESOLUTION)+"_"+to_string(MODE)+"/TEST_box_", NSUBBOXES);
-    }
+    b->save_to_file(OUTPUT_PREFIX, NSUBBOXES);
+
     delete b;
     
     return 0;
