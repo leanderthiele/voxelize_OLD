@@ -33,7 +33,7 @@ with the following command line-arguments
 * INPUT_PREFIX: (str) It is assumed that the input simulation files have the filenames
                       INPUT_PREFIX\<n\>.hdf5, where n is an index ranging from 0 to NCHUNKS-1
 * OUTPUT_PREFIX: (str) The output files will be written in the format
-                       OUTPUT_PREFIX_\<i\>_\<j\>_\<k\> where i,j,k run from 0 to NSUBBOXES-1.
+                       OUTPUT_PREFIX\_\<i\>\_\<j\>\_\<k\> where i,j,k run from 0 to NSUBBOXES-1.
                        These files are binary files in row-major (C) order, covering a cubical
                        sub-box of the original simulation box.
                        Note that the data is single precision, so if reading from numpy you need to
