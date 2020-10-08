@@ -27,7 +27,7 @@ with the following command line-arguments
     * 4 = electron momentum density
     * 5 = dark matter velocity
 * INPUT_PREFIX: (str) It is assumed that the input simulation files have the filenames
-                      INPUT_PREFIX<n>.hdf5, where n is an index ranging from 0 to NCHUNKS-1
+                      INPUT_PREFIX\<n\>.hdf5, where n is an index ranging from 0 to NCHUNKS-1
 * OUTPUT_PREFIX: (str) The output files will be written in the format
                        OUTPUT_PREFIX_<i>_<j>_<k> where i,j,k run from 0 to NSUBBOXES-1.
                        These files are binary files in row-major (C) order, covering a cubical
