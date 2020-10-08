@@ -12,6 +12,7 @@ sh compile.sh
 Use:
 ```shell
 module load hdf5/intel-17.0/1.10.0
+export OMP_NUM_THREADS=<...>
 ./voxelize PTYPE \
            INPUT_PREFIX \
            OUTPUT_PREFIX \
