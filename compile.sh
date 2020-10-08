@@ -1,8 +1,12 @@
 # module load hdf5/intel-17.0/1.10.0
+
+# adapt for your own compilation
+export PATH_TO_EIGEN=/home/lthiele/Overlaps
+
 icc -Ofast -std=c++17 -qopenmp \
   -no-inline-max-size -no-inline-max-total-size \
   -Wall -Wextra \
-  -I/home/lthiele/Overlaps \
+  -I${PATH_TO_EIGEN} \
   -L/usr/local/hdf5/intel-17.0/1.10.0/lib64 \
   -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5_hl.a \
   -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5.a \
