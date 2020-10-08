@@ -4,7 +4,6 @@
 export PATH_TO_EIGEN=/home/lthiele/Overlaps
 
 icc -Ofast -std=c++17 -qopenmp \
-  -no-inline-max-size -no-inline-max-total-size \
   -Wall -Wextra \
   -I${PATH_TO_EIGEN} \
   -L/usr/local/hdf5/intel-17.0/1.10.0/lib64 \

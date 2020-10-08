@@ -166,7 +166,7 @@ struct Box
             cout << "Standard exception :" << e.what() << endl;
         }
         // initialize to zero
-        for (int ii=0; ii<this->Nside*this->Nside*this->Nside; ii++) { this->values[ii] = 0.0; }
+        for (long long int ii=0; ii<this->Nside*this->Nside*this->Nside; ii++) { this->values[ii] = 0.0; }
     }//}}}
     ~Box()
     {//{{{
@@ -450,9 +450,6 @@ void box_filling(Box *b, string INPUT_PREFIX, int PTYPE, int NCHUNKS, int axis =
 
 int main(int argc, char **argv)
 {//{{{
-
-    if (argc!=3) { cout << "wrong number of arguments." << endl; return -1; }
-
     cout << "Going to use " << std::getenv("OMP_NUM_THREADS") << " threads." << endl;
 
     const int PTYPE = atoi(argv[1]);
