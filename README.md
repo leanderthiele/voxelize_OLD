@@ -6,7 +6,6 @@ and you'll need to adapt the script compile.sh to reflect the location
 of these header files.
 ```shell
 module load intel/18.0/64/18.0.3.222
-module load intel-mpi/intel/2018.3/64
 module load hdf5/intel-17.0/1.10.0
 sh compile.sh
 ```
