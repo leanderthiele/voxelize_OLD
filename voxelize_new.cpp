@@ -356,6 +356,8 @@ void box_filling(Box *b, string INPUT_PREFIX, int PTYPE, string OPERATION, int N
         for (int seg=0; seg<segment_list.size(); seg++)
         {
             string this_seg = segment_list.at(seg);
+            cout << "this_seg = " << this_seg << "\n";
+
             float val_pwr;
             int pos_pwr = this_seg.find('^');
             if (pos_pwr == string::npos)
@@ -367,29 +369,20 @@ void box_filling(Box *b, string INPUT_PREFIX, int PTYPE, string OPERATION, int N
                 val_pwr = stof(this_seg.substr(pos_pwr+1));
             }
 
-            int pos_quot_1 = this_seg.find('"');
-            int pos_quot_2 = this_seg.rfind('"');
-            if (pos_quot_1 == pos_quot_2)
+            try
             {
-                if (pos_quot_1 == string::npos)
+                float base = stof(this_seg.substr(0, pos_pwr-1));
+
+                for (long ii=0; ii<Nparticles; ii++)
                 {
-                    float base = stof(this_seg.substr(0, pos_pwr-1));
-                    for (long ii=0; ii<Nparticles; ii++)
-                    {
-                        weight[ii] *= std::pow(base, val_pwr);
-                    }
-                }
-                else
-                {
-                    cout << "Invalid string passed as operation: single quotation mark.\n";
-                    return;
+                    weight[ii] *= std::pow(base, val_pwr);
                 }
             }
-            else
+            catch (const std::invalid_argument& ia)
             {
-                string field_name = this_seg.substr(pos_quot_1+1, pos_quot_2-pos_quot_1);
                 int pos_brack_1 = this_seg.find('[');
                 int pos_brack_2 = this_seg.find(']');
+                string field_name = this_seg.substr(0, (pos_brack_1==string::npos) ? pos_pwr : pos_brack_1);
                 int stride;
                 int offset;
                 if (pos_brack_1 == pos_brack_2)
@@ -413,8 +406,9 @@ void box_filling(Box *b, string INPUT_PREFIX, int PTYPE, string OPERATION, int N
                         return;
                     }
                     stride = 3;
-                    offset = stoi(this_seg.substr(pos_brack_1+1, pos_brack_2-pos_brack_1));
+                    offset = stoi(this_seg.substr(pos_brack_1+1, pos_brack_2-pos_brack_1-1));
                 }
+
                 Field f = Field(s, PTYPE, field_name);
                 f.read_to_memory();
                 for (long ii=0; ii<Nparticles; ii++)

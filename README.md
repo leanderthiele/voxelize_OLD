@@ -55,3 +55,38 @@ with the following command line-arguments
 * [AXIS]: (int) if PTYPE corresponds to a vectorial quantity, e.g. DM velocity,
                 this argument specifies the component of the vector which is used.
                 Otherwise it is ignored, and need not be set.
+
+Update
+======
+There's a new version now for you convenience, which is more flexible.
+Use:
+```shell
+./voxelize_new PTYPE \
+               INPUT_PREFIX \
+               OUTPUT_PREFIX \
+               NCHUNKS \
+               BOX_SIZE \
+               NSIDE \
+               NSUBBOXES \
+               OPERATION
+```
+Compared to the above, the following arguments are different:
+* PTYPE: (int)
+    now it's really the particle type:
+    * 0 = gas
+    * 1 = dark matter
+* OPERATION: (str) For extra convenience, you can now directly specify the combination of fields you want.
+                   OPERATION is a string that consists of factors, delimited by the character \*.
+                   No spaces allowed.
+                   The factors, again, split into two parts: the base and the exponent,
+                   delimited by the character ^.
+                   The exponent, together with the ^ can be omitted.
+                   The base can be of two types:
+                       * something that can be interpreted as a float (e.g. 3.14)
+                       * something that can be interpreted as a field name (e.g. Density)
+                   For example, you can take OPERATION as
+                   ```
+                   1.23^1.5*Density^-1*Whateverotherfieldnameyouwouldwant^3.14
+		   ```
+                   One final catch: For vectorial quantities, e.g. Velocity, you should follow them
+                   by [n], where n (0..2) gives the direction you want to extract.
