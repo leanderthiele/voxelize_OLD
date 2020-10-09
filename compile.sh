@@ -8,4 +8,4 @@ icc -Ofast -std=c++17 -qopenmp \
   -Wall -Wextra \
   -I${PATH_TO_EIGEN} \
   -lhdf5 -lhdf5_cpp \
-  -o voxelize voxelize.cpp
+  -o voxelize_new voxelize_new.cpp
