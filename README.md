@@ -55,3 +55,17 @@ Notes:
 * There could be silent errors if the input arrays are not contiguous in memory
   (i.e., be careful with things like transposing, and non-trivial slicing)
 * You should set the environment variable OMP\_NUM\_THREADS to control multi-threading
+* The scheduling of the OpenMP threads can be controlled using the environment variable
+  OMP\_SCHEDULE.
+  I would recommend the following:
+  * set to "static" if the particles are more or less randomly ordered.
+    Then each thread should receive approximately equal load and "static" scheduling
+    incurs the least overhead.
+  * set to "dynamic" if the ordering of the particles is very non-random.
+    e.g., it can be be that there's a dense halo with a lot of very small particles
+    at the beginning of the array. These particles will require less work than those in
+    underdense regions (where their size is fairly large, so many overlaps need to be computed).
+    In that case "dynamic" scheduling could be more efficient.
+
+  I would recommend to start with "static" scheduling and only adjust if you see that some
+  threads receive much less work than others.

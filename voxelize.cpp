@@ -34,7 +34,7 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
 {
     float box_a = box_L / (float)box_N;
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(runtime)
     for (long pp = 0; pp < Nparticles; ++pp)
     {
         float R = radii[pp] / box_a;
