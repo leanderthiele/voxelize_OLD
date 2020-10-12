@@ -18,6 +18,16 @@ python test.py
 Note: the python package *hardcodes* the location of libvoxelize.so,
 which means you shouldn't move/delete it.
 
+- Installation on rusty
+
+1) Place Eigen3 headers in software. Version 3.3.8 seems to have problems. 3.3.7 works fine. Change name from eigen-3.3.7 to eigen3
+
+2) Add this to the compile.sh script: -I/mnt/home/fvillaescusa/software
+
+3) Change < > by " " in the file overlap_lft.hpp
+
+4) sh compile.sh
+
 
 Usage
 =====
