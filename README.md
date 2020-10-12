@@ -41,6 +41,9 @@ b = Box(box_N, box_L, box_dim=box_dim)
 #     field       = (Nparticles, box_dim) or (Nparticles, ) if box_dim==1
 b.add_particles(coordinates, radii, field)
 
+# add_particles() can be called repeatedly,
+#    in case you want to chunk the inputs to save memory
+
 # At any point, the filled box can be retreived as
 b.box
 # It has shape (box_N, box_N, box_N, box_dim) if box_dim != 1,
