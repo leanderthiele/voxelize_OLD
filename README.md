@@ -26,7 +26,7 @@ The python code has a single class, named Box:
 ```python
 from voxelize import Box
 
-box_N   = 1024    # number of grid points
+box_N   = 1024    # number of grid points per side
 box_L   = 25000.0 # sidelength in the same units as coordinates and radii
 box_dim = 1       # set this to the same dimension as the one of your field,
                   #    e.g. 1 if field is a scalar and 3 if field is a vector
