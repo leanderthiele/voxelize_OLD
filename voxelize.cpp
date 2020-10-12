@@ -1,9 +1,5 @@
 #include <omp.h>
 
-// TODO
-#include <iostream>
-#include <stdio.h>
-
 #include "overlap_lft.hpp"
 
 static inline float
