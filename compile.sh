@@ -1,15 +1,11 @@
-# module load hdf5/intel-17.0/1.10.0
+g++ -O4 -ffast-math -std=c++17 -fopenmp \
+  -Wall -Wextra -DNDEBUG \
+  -shared -fPIC \
+  -o libvoxelize.so voxelize.cpp
 
-# adapt for your own compilation
-export PATH_TO_EIGEN=/home/lthiele/Overlaps
+echo $(pwd) > voxelize/PATHTOSO.txt
+echo $(nm -D libvoxelize.so) > tmp_nm_output.txt
+python _extract_mangled_name.py
+rm tmp_nm_output.txt
 
-icc -Ofast -std=c++17 -qopenmp \
-  -Wall -Wextra \
-  -I${PATH_TO_EIGEN} \
-  -L/usr/local/hdf5/intel-17.0/1.10.0/lib64 \
-  -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5_hl.a \
-  -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5.a \
-  -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5_hl_cpp.a \
-  -L/usr/local/hdf5/intel-17.0/1.10.0/lib64/libhdf5_cpp.a \
-  -lhdf5 -lhdf5_cpp \
-  -o voxelize_new voxelize_new.cpp
+pip install . --user

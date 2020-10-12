@@ -41,11 +41,7 @@
 namespace Olap {
 
 // typedefs
-
-// LFT : changed this from double to float
-typedef float scalar_t;
-
-
+typedef double scalar_t;
 typedef Eigen::Matrix<scalar_t, 3, 1, Eigen::DontAlign> vector_t;
 typedef Eigen::Matrix<scalar_t, 2, 1, Eigen::DontAlign> vector2_t;
 
