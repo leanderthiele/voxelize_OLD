@@ -80,15 +80,13 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
         {
             long idx_x = box_N * box_N * ((box_N+xx%box_N) % box_N);
 
-            __builtin_prefetch (box+idx_x, 1, 3);
-
             for (long yy  = (long)(part_centre[1] - R) - 1;
                       yy <= (long)(part_centre[1] + R);
                     ++yy)
             {
                 long idx_y = idx_x + box_N * ((box_N+yy%box_N) % box_N);
 
-                __builtin_prefetch (box+idx_y, 1, 3);
+                __builtin_prefetch (box+idx_y+box_N, 1, 3);
 
                 for (long zz  = (long)(part_centre[2] - R) - 1;
                           zz <= (long)(part_centre[2] + R);
