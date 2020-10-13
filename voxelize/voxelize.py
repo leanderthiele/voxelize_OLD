@@ -26,15 +26,18 @@ class Box(object) :
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
-                           ndpointer(ct.c_float, flags='C_CONTIGUOUS'),]
+                           ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
+                           ct.c_int, ]
 
     def __init__(self,
                  box_N,
                  box_L,
-                 box_dim=1) :
+                 box_dim=1,
+                 spherical=True) :
         self.box_N = box_N
         self.box_L = box_L
         self.box_dim = box_dim
+        self.spherical = spherical
 
         if box_dim == 1 :
             self.box = np.zeros((box_N, box_N, box_N),
@@ -66,6 +69,6 @@ class Box(object) :
 
         # call the compiled function
         err = Box.__voxelize(N_particles, self.box_N, self.box_L, self.box_dim,
-                             coordinates, radii, field, self.box)
+                             coordinates, radii, field, self.box, self.spherical)
         if err :
             raise RuntimeError('voxelize returned with non-zero exit code.')

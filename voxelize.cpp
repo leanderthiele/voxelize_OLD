@@ -1,9 +1,11 @@
+#include <iostream>
+
 #include <omp.h>
 
 #include "overlap_lft.hpp"
 
 static inline float
-overlap (Olap::Sphere& sph, float cub[3])
+sph_overlap (Olap::Sphere& sph, float cub[3])
 {
     Olap::vector_t v0 {cub[0],      cub[1],      cub[2]     };
     Olap::vector_t v1 {cub[0]+1.0F, cub[1],      cub[2]     };
@@ -19,6 +21,33 @@ overlap (Olap::Sphere& sph, float cub[3])
     return Olap::overlap(sph, hex);
 }
 
+static inline float
+line_overlap (float x0, float a0, float x1, float a1)
+// assumes x1 > x0
+{
+    return std::max(0.0F, std::min(x0+a0-x1, a1));
+}
+
+static inline float
+cub_overlap (const float part_vert[3], float part_side, float cub[3])
+{
+    float out = 1.0F;
+    for (int ii=0; ii<3; ii++)
+    {
+        float x0 = part_vert[ii] - 0.5F * part_side;
+        float x1 = cub[ii];
+        if (x1 > x0)
+        {
+            out *= line_overlap(x0, part_side, x1, 1.0F);
+        }
+        else
+        {
+            out *= line_overlap(x1, 1.0F, x0, part_side);
+        }
+    }
+    return out;
+}
+
 static inline long
 flattened_index (long coord[3], long N)
 {
@@ -30,35 +59,48 @@ flattened_index (long coord[3], long N)
 int
 voxelize (long Nparticles, long box_N, float box_L, long box_dim,
           const float *const coords, const float *const radii, const float *const field,
-          float *box)
+          float *box, int spherical)
 {
     float box_a = box_L / (float)box_N;
+
+    std::vector<Olap::Sphere> sph (omp_get_max_threads());
 
     #pragma omp parallel for schedule(runtime)
     for (long pp = 0; pp < Nparticles; ++pp)
     {
         float R = radii[pp] / box_a;
+        if (!(spherical)) // cbrt(pi/6)
+            R *= 0.8059959770082348203584834233196424694723070361619307778461460376F;
 
-        float sphere_centre[3];
+        float part_centre[3];
         for (long ii = 0; ii < 3L; ++ii)
-            sphere_centre[ii] = coords[3L*pp+ii] / box_a;
+            part_centre[ii] = coords[3L*pp+ii] / box_a;
 
-        Olap::Sphere sph {{sphere_centre[0], sphere_centre[1], sphere_centre[2]}, R};
+        if (spherical)
+            sph[omp_get_thread_num()] = Olap::Sphere {{part_centre[0],
+                                                       part_centre[1],
+                                                       part_centre[2]},
+                                                      R};
 
-        for (long xx  = (long)(sphere_centre[0] - R) - 1;
-                  xx <= (long)(sphere_centre[0] + R);
+        for (long xx  = (long)(part_centre[0] - R) - 1;
+                  xx <= (long)(part_centre[0] + R);
                 ++xx)
         {
-            for (long yy  = (long)(sphere_centre[1] - R) - 1;
-                      yy <= (long)(sphere_centre[1] + R);
+            for (long yy  = (long)(part_centre[1] - R) - 1;
+                      yy <= (long)(part_centre[1] + R);
                     ++yy)
             {
-                for (long zz  = (long)(sphere_centre[2] - R) - 1;
-                          zz <= (long)(sphere_centre[2] + R);
+                for (long zz  = (long)(part_centre[2] - R) - 1;
+                          zz <= (long)(part_centre[2] + R);
                         ++zz)
                 {
                     float cub[] = {(float)xx, (float)yy, (float)zz};
-                    float vol = overlap(sph, cub);
+                    float vol;
+
+                    if (spherical)
+                        vol = sph_overlap(sph[omp_get_thread_num()], cub);
+                    else
+                        vol = cub_overlap(part_centre, 2.0F*R, cub);
 
                     long pos[] = {xx, yy, zz};
                     long idx = flattened_index(pos, box_N);

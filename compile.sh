@@ -1,5 +1,5 @@
-g++ -O4 -ffast-math -std=c++17 -fopenmp \
-  -Wall -Wextra -DNDEBUG \
+g++ -O4 -ffast-math -std=c++17 -march=native -fopenmp \
+  -Wall -Wextra -g -DNDEBUG \
   -shared -fPIC \
   -o libvoxelize.so voxelize.cpp
 

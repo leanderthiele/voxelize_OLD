@@ -22,8 +22,8 @@
 #define OVERLAP_HPP
 
 // Eigen
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
 
 // C++
 #include <algorithm>
@@ -868,6 +868,9 @@ class Sphere {
 		Sphere(const vector_t& c, scalar_t r) : center(c), radius(r),
 			volume(scalar_t(4.0 / 3.0 * pi) * r * r * r) {
 		}
+        
+        // LFT added empty constructor
+        Sphere() { }
 
 		scalar_t capVolume(scalar_t h) const {
 			if(h <= scalar_t(0))

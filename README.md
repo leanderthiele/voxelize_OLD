@@ -40,8 +40,12 @@ box_N   = 1024    # number of grid points per side
 box_L   = 25000.0 # sidelength in the same units as coordinates and radii
 box_dim = 1       # set this to the same dimension as the one of your field,
                   #    e.g. 1 if field is a scalar and 3 if field is a vector
+spherical = True  # by default, represents the particles as uniform spheres.
+                  #    Setting this option to False uses a representation as cubes,
+                  #    which is much faster but perhaps slightly less accurate
+                  #    (this needs to be tested)
 
-b = Box(box_N, box_L, box_dim=box_dim)
+b = Box(box_N, box_L, box_dim=box_dim, spherical=spherical)
 
 # assume we have coordinates, radii, field in memory
 #     as numpy arrays (dtype=np.float32!)

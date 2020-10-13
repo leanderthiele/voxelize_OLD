@@ -29,7 +29,7 @@ for dim in [1, 3, 5] :
     f = np.ones((N_particles, dim), dtype=np.float32) * F_particle
 
     # create a Box instance
-    b = Box(box_N, box_L, box_dim=dim)
+    b = Box(box_N, box_L, box_dim=dim, spherical=False)
 
     # add the particles
     b.add_particles(c, r, f)
