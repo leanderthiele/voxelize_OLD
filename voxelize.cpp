@@ -48,14 +48,6 @@ cub_overlap (const float part_vert[3], float part_side, float cub[3])
     return out;
 }
 
-static inline long
-flattened_index (long coord[3], long N)
-{
-    return N * N * ((N+coord[0]%N) % N)
-           +   N * ((N+coord[1]%N) % N)
-           +       ((N+coord[2]%N) % N);
-}
-
 int
 voxelize (long Nparticles, long box_N, float box_L, long box_dim,
           const float *const coords, const float *const radii, const float *const field,
@@ -86,14 +78,24 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
                   xx <= (long)(part_centre[0] + R);
                 ++xx)
         {
+            long idx_x = box_N * box_N * ((box_N+xx%box_N) % box_N);
+
+            __builtin_prefetch (box+idx_x, 1, 3);
+
             for (long yy  = (long)(part_centre[1] - R) - 1;
                       yy <= (long)(part_centre[1] + R);
                     ++yy)
             {
+                long idx_y = idx_x + box_N * ((box_N+yy%box_N) % box_N);
+
+                __builtin_prefetch (box+idx_y, 1, 3);
+
                 for (long zz  = (long)(part_centre[2] - R) - 1;
                           zz <= (long)(part_centre[2] + R);
                         ++zz)
                 {
+                    long idx = idx_y + (box_N+zz%box_N) % box_N;
+
                     float cub[] = {(float)xx, (float)yy, (float)zz};
                     float vol;
 
@@ -102,38 +104,27 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
                     else
                         vol = cub_overlap(part_centre, 2.0F*R, cub);
 
-                    long pos[] = {xx, yy, zz};
-                    long idx = flattened_index(pos, box_N);
-
                     // unroll the most common cases for efficiency
-                    if (box_dim == 1)
+                    switch (box_dim)
                     {
-                        #pragma omp atomic
-                        box[idx] += field[pp] * vol;
-                    }
-                    else if (box_dim == 2)
-                    {
-                        for (long dd = 0; dd < 2; ++dd)
-                        {
+                        case (1) :
                             #pragma omp atomic
-                            box[idx*2 + dd] += field[pp*2 + dd] * vol;
-                        }
-                    }
-                    else if (box_dim == 3)
-                    {
-                        for (long dd = 0; dd < 3; ++dd)
-                        {
-                            #pragma omp atomic
-                            box[idx*3 + dd] += field[pp*3 + dd] * vol;
-                        }
-                    }
-                    else
-                    {
-                        for (long dd = 0; dd < box_dim; ++dd)
-                        {
-                            #pragma omp atomic
-                            box[idx*box_dim + dd] += field[pp*box_dim + dd] * vol;
-                        }
+                            box[idx] += field[pp] * vol;
+                            break;
+                        case (2) :
+                            for (long dd = 0; dd < 2; ++dd)
+                                #pragma omp atomic
+                                box[idx*2 + dd] += field[pp*2 + dd] * vol;
+                            break;
+                        case (3) :
+                            for (long dd = 0; dd < 3; ++dd)
+                                #pragma omp atomic
+                                box[idx*3 + dd] += field[pp*3 + dd] * vol;
+                            break;
+                        default :
+                            for (long dd = 0; dd < box_dim; ++dd)
+                                #pragma omp atomic
+                                box[idx*box_dim + dd] += field[pp*box_dim + dd] * vol;
                     }
                 }
             }
