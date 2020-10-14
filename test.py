@@ -13,7 +13,9 @@ box_N = 128
 box_L = np.random.rand() * float(box_N)
 
 # compute mean particle size
-V_particle = box_L**3.0 / float(N_particles)
+#     to fully test Paco's setup, don't choose this
+#     such that particles span full volume
+V_particle = 0.7 * box_L**3.0 / float(N_particles)
 
 for dim in [1, 3, 5] :
     
@@ -33,8 +35,8 @@ for dim in [1, 3, 5] :
     # sanity check
     box_vol = box_L**3.0
     part_vol = 4.0*np.pi/3.0 * np.sum(r**3.0)
-    print('expect ~ %.2e fractional Delta '\
-          '(due to particles not exactly spanning the volume)'%np.fabs(part_vol/box_vol - 1.0))
+    print('expect ~ %.2e fractional Delta in first test '\
+          '(due to particles not spanning the volume)'%np.fabs(part_vol/box_vol - 1.0))
 
     f = np.array(np.random.rand(N_particles, dim),
                  dtype=np.float32)
