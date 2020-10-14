@@ -12,9 +12,8 @@ N_particles = 128*128*128
 box_N = 128
 box_L = np.random.rand() * float(box_N)
 
-# compute particle size (identical for each particle)
+# compute mean particle size
 V_particle = box_L**3.0 / float(N_particles)
-R_particle = np.cbrt(3.0 * V_particle / 4.0 / np.pi)
 
 for dim in [1, 3, 5] :
     
@@ -28,10 +27,8 @@ for dim in [1, 3, 5] :
     # need to ensure correct mean here
     #    use exponential dist since it allows us to generate relatively large
     #    range of possible radii that are positive by construction
-    r = np.array(np.cbrt(3.0 / 4.0 / np.pi
-                         * np.random.exponential(scale=V_particle,
-                                                 size=N_particles)),
-                 dtype=np.float32)
+    v = np.random.exponential(scale=V_particle, size=N_particles)
+    r = np.array(np.cbrt(3.0 / 4.0 / np.pi * v), dtype=np.float32)
     
     # sanity check
     box_vol = box_L**3.0
@@ -52,7 +49,18 @@ for dim in [1, 3, 5] :
     expected = np.mean(f)
     computed = np.mean(b.box)
     diff     = np.fabs(computed/expected - 1.0)
-    print('expected = %.4e, computed = %.4e '\
+    print('Test the average :\n'\
+          '\texpected = %.4e, computed = %.4e '\
+          '--> fractional Delta = %.4e'%(expected,
+                                         computed,
+                                         diff))
+
+    # other check
+    expected = np.sum(f * v[:,None])
+    computed = np.sum(b.box) * (box_L/box_N)**3.0
+    diff     = np.fabs(computed/expected - 1.0)
+    print('Test the weighted sum (Pacos test) :\n'\
+          '\texpected = %.4e, computed = %.4e '\
           '--> fractional Delta = %.4e\n'%(expected,
                                            computed,
                                            diff))
