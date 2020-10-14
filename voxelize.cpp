@@ -48,6 +48,33 @@ cub_overlap (const float part_vert[3], float part_side, float cub[3])
     return out;
 }
 
+static inline void
+add_to_box (float *box, const float *const field, float vol, long box_dim)
+{
+    // unroll the most common cases for efficiency
+    switch (box_dim)
+    {
+        case (1) :
+            #pragma omp atomic
+            box[0] += field[0] * vol;
+            break;
+        case (2) :
+            for (long dd = 0; dd < 2; ++dd)
+                #pragma omp atomic
+                box[dd] += field[dd] * vol;
+            break;
+        case (3) :
+            for (long dd = 0; dd < 3; ++dd)
+                #pragma omp atomic
+                box[dd] += field[dd] * vol;
+            break;
+        default :
+            for (long dd = 0; dd < box_dim; ++dd)
+                #pragma omp atomic
+                box[dd] += field[dd] * vol;
+    }
+}
+
 int
 voxelize (long Nparticles, long box_N, float box_L, long box_dim,
           const float *const coords, const float *const radii, const float *const field,
@@ -102,28 +129,7 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
                     else
                         vol = cub_overlap(part_centre, 2.0F*R, cub);
 
-                    // unroll the most common cases for efficiency
-                    switch (box_dim)
-                    {
-                        case (1) :
-                            #pragma omp atomic
-                            box[idx] += field[pp] * vol;
-                            break;
-                        case (2) :
-                            for (long dd = 0; dd < 2; ++dd)
-                                #pragma omp atomic
-                                box[idx*2 + dd] += field[pp*2 + dd] * vol;
-                            break;
-                        case (3) :
-                            for (long dd = 0; dd < 3; ++dd)
-                                #pragma omp atomic
-                                box[idx*3 + dd] += field[pp*3 + dd] * vol;
-                            break;
-                        default :
-                            for (long dd = 0; dd < box_dim; ++dd)
-                                #pragma omp atomic
-                                box[idx*box_dim + dd] += field[pp*box_dim + dd] * vol;
-                    }
+                    add_to_box(box+idx*box_dim, field+pp*box_dim, vol, box_dim);
                 }
             }
         }

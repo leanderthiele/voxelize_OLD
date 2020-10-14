@@ -7,10 +7,9 @@ from voxelize import Box
 np.random.seed(abs(hash(time()))%2**32)
 
 # some settings
-N_particles = 10
-F_particle = np.random.rand() + 1.0
+N_particles = 256*256*256
 
-box_N = 16
+box_N = 256
 box_L = np.random.rand() * float(box_N)
 
 # compute particle size (identical for each particle)
@@ -26,7 +25,8 @@ for dim in [1, 3, 5] :
     c = np.array(np.random.rand(N_particles, 3)*box_L,
                  dtype=np.float32)
     r = np.ones(N_particles, dtype=np.float32) * R_particle
-    f = np.ones((N_particles, dim), dtype=np.float32) * F_particle
+    f = np.array(np.random.rand(N_particles, dim),
+                 dtype=np.float32)
 
     # create a Box instance
     b = Box(box_N, box_L, box_dim=dim, spherical=False)
@@ -35,7 +35,7 @@ for dim in [1, 3, 5] :
     b.add_particles(c, r, f)
 
     # check output
-    expected = F_particle
+    expected = np.mean(f)
     computed = np.mean(b.box)
     diff     = computed/expected - 1.0
     print('expected = %.4e, computed = %.4e '\
