@@ -12,7 +12,10 @@ class Box(object) :
     __PATHTOSO = __PATHTOSO.rstrip()
     if isinstance(__PATHTOSO, bytes) :
         __PATHTOSO = str(__PATHTOSO, encoding=stdout.encoding)
-    __lib = ct.CDLL(join(__PATHTOSO, 'libvoxelize.so'))
+    try :
+        __lib = ct.CDLL(join(__PATHTOSO, 'libvoxelize.so'))
+    except OSError :
+        __lib = ct.CDLL('libvoxelize.so')
 
     # read the mangled name
     __MANGLEDNAME = resource_string('voxelize', 'MANGLEDNAME.txt')

@@ -5,7 +5,8 @@
 #include "overlap_lft.hpp"
 
 static inline float
-sph_overlap (Olap::Sphere& sph, float cub[3])
+sph_overlap (const Olap::Sphere& __restrict__ sph,
+             const float *const __restrict__ cub)
 {
     Olap::vector_t v0 {cub[0],      cub[1],      cub[2]     };
     Olap::vector_t v1 {cub[0]+1.0F, cub[1],      cub[2]     };
@@ -22,14 +23,16 @@ sph_overlap (Olap::Sphere& sph, float cub[3])
 }
 
 static inline float
-line_overlap (float x0, float a0, float x1, float a1)
+line_overlap (const float x0, const float a0, const float x1, const float a1)
 // assumes x1 > x0
 {
     return std::max(0.0F, std::min(x0+a0-x1, a1));
 }
 
 static inline float
-cub_overlap (const float part_vert[3], float part_side, float cub[3])
+cub_overlap (const float *const __restrict__ part_vert,
+             const float part_side,
+             const float *const __restrict__ cub)
 {
     float out = 1.0F;
     for (int ii=0; ii<3; ii++)
@@ -49,7 +52,9 @@ cub_overlap (const float part_vert[3], float part_side, float cub[3])
 }
 
 static inline void
-add_to_box (float *box, const float *const field, float vol, long box_dim)
+add_to_box (float *const __restrict__ box,
+            const float *const __restrict__ field,
+            const float vol, const long box_dim)
 {
     // unroll the most common cases for efficiency
     switch (box_dim)
@@ -76,9 +81,12 @@ add_to_box (float *box, const float *const field, float vol, long box_dim)
 }
 
 int
-voxelize (long Nparticles, long box_N, float box_L, long box_dim,
-          const float *const coords, const float *const radii, const float *const field,
-          float *box, int spherical)
+voxelize (const long Nparticles, const long box_N, const float box_L, const long box_dim,
+          const float *const __restrict__ coords,
+          const float *const __restrict__  radii,
+          const float *const __restrict__ field,
+          float *const __restrict__ box,
+          const int spherical)
 {
     float box_a = box_L / (float)box_N;
 
@@ -105,13 +113,13 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
                   xx <= (long)(part_centre[0] + R);
                 ++xx)
         {
-            long idx_x = box_N * box_N * ((box_N+xx%box_N) % box_N);
+            const long idx_x = box_N * box_N * ((box_N+xx%box_N) % box_N);
 
             for (long yy  = (long)(part_centre[1] - R) - 1;
                       yy <= (long)(part_centre[1] + R);
                     ++yy)
             {
-                long idx_y = idx_x + box_N * ((box_N+yy%box_N) % box_N);
+                const long idx_y = idx_x + box_N * ((box_N+yy%box_N) % box_N);
 
                 __builtin_prefetch (box+idx_y+box_N, 1, 3);
 
@@ -119,9 +127,9 @@ voxelize (long Nparticles, long box_N, float box_L, long box_dim,
                           zz <= (long)(part_centre[2] + R);
                         ++zz)
                 {
-                    long idx = idx_y + (box_N+zz%box_N) % box_N;
+                    const long idx = idx_y + (box_N+zz%box_N) % box_N;
 
-                    float cub[] = {(float)xx, (float)yy, (float)zz};
+                    const float cub[] = {(float)xx, (float)yy, (float)zz};
                     float vol;
 
                     if (spherical)
