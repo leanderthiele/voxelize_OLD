@@ -792,6 +792,9 @@ class Hexahedron : public detail::hex_mappings {
 			init();
 		}
 
+        // LFT added empty constructor
+        Hexahedron() {}
+
 		void apply(const Transformation& t) {
 			for(auto& v : vertices)
 				v = t.scaling * (v + t.translation);

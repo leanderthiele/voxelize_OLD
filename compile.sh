@@ -1,4 +1,4 @@
-clang++-10 -O4 -ffast-math -std=c++17 -march=native -fopenmp \
+g++ -O4 -ffast-math -std=c++17 -march=native -fopenmp \
   -Wall -Wextra -g3 -DNDEBUG \
   -shared -fPIC \
   -o libvoxelize.so voxelize.cpp

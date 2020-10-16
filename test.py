@@ -7,17 +7,17 @@ from voxelize import Box
 np.random.seed(abs(hash(time()))%2**32)
 
 # some settings
-N_particles = 128*128*128
+N_particles = 10
 
-box_N = 128
-box_L = np.random.rand() * float(box_N)
+box_N = 10 #128
+box_L = 10 #np.random.rand() * float(box_N)
 
 # compute mean particle size
 #     to fully test Paco's setup, don't choose this
 #     such that particles span full volume
 V_particle = 0.7 * box_L**3.0 / float(N_particles)
 
-for dim in [1, 3, 5] :
+for dim in [1, ] :# 3, 5] :
     
     # different seed for each dimension
     np.random.seed((abs(hash(time()))+dim)%2**32)
@@ -29,8 +29,13 @@ for dim in [1, 3, 5] :
     # need to ensure correct mean here
     #    use exponential dist since it allows us to generate relatively large
     #    range of possible radii that are positive by construction
-    v = np.random.exponential(scale=V_particle, size=N_particles)
-    r = np.array(np.cbrt(3.0 / 4.0 / np.pi * v), dtype=np.float32)
+    #v = np.random.exponential(scale=V_particle, size=N_particles)
+    
+    #r = np.array(np.cbrt(3.0 / 4.0 / np.pi * v), dtype=np.float32)
+
+    # TODO debugging
+    r = np.random.uniform(0.5, 2.0, size=N_particles).astype(np.float32)
+    v = 4.0 * np.pi / 3 * r**3.0
     
     # sanity check
     box_vol = box_L**3.0
@@ -42,7 +47,7 @@ for dim in [1, 3, 5] :
                  dtype=np.float32)
 
     # create a Box instance
-    b = Box(box_N, box_L, box_dim=dim, spherical=False)
+    b = Box(box_N, box_L, box_dim=dim, spherical=True)
 
     # add the particles
     b.add_particles(c, r, f)

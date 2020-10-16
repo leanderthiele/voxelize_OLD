@@ -16,7 +16,9 @@ python test.py
 ```
 
 Note: the python package *hardcodes* the location of libvoxelize.so,
-which means you shouldn't move/delete it.
+which means you probably shouldn't move/delete it.
+You can also move libvoxelize.so, provided you append the new location
+to LD\_LIBRARY\_PATH.
 
 **Installation on rusty**
 
@@ -24,7 +26,7 @@ which means you shouldn't move/delete it.
 
 2) Add this to the compile.sh script: -I/mnt/home/fvillaescusa/software
 
-3) Change < > by " " in the file overlap_lft.hpp
+3) Change < > by " " in the file overlap_lft.hpp (this is already done by default now)
 
 4) sh compile.sh
 
