@@ -4,18 +4,20 @@ import ctypes as ct
 
 from os.path import join
 from sys import stdout
-from pkg_resources import resource_string
+from pkg_resources import resource_filename, resource_string
 
 class Box(object) :
     # locate the shared object
-    __PATHTOSO = resource_string('voxelize', 'PATHTOSO.txt')
-    __PATHTOSO = __PATHTOSO.rstrip()
-    if isinstance(__PATHTOSO, bytes) :
-        __PATHTOSO = str(__PATHTOSO, encoding=stdout.encoding)
+    __PATHTOSO = resource_filename('voxelize', 'libvoxelize.so')
     try :
-        __lib = ct.CDLL(join(__PATHTOSO, 'libvoxelize.so'))
+        __lib = ct.CDLL(__PATHTOSO)
     except OSError :
         __lib = ct.CDLL('libvoxelize.so')
+    
+    # locate the neural network, convert to bytes if required
+    __PATHTONET = resource_filename('voxelize', 'interp_net.pt')
+    if isinstance(__PATHTONET, str) :
+        __PATHTONET = __PATHTONET.encode(stdout.encoding);
 
     # read the mangled name
     __MANGLEDNAME = resource_string('voxelize', 'MANGLEDNAME.txt')
@@ -23,6 +25,7 @@ class Box(object) :
     if isinstance(__MANGLEDNAME, bytes) :
         __MANGLEDNAME = str(__MANGLEDNAME, encoding=stdout.encoding)
     
+    # define the function's interface
     __voxelize = eval('lib.%s'%__MANGLEDNAME, {'lib': __lib})
     __voxelize.restype = ct.c_int
     __voxelize.argtypes = [ct.c_long, ct.c_long, ct.c_float, ct.c_long,
@@ -30,17 +33,20 @@ class Box(object) :
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
                            ndpointer(ct.c_float, flags='C_CONTIGUOUS'),
-                           ct.c_int, ]
+                           ct.c_int, ct.c_char_p ]
+
+    # working modes
+    __wrk_modes = ['cube', 'sphere', 'interp', 'debug', ]
 
     def __init__(self,
                  box_N,
                  box_L,
                  box_dim=1,
-                 spherical=True) :
+                 mode='cube') :
         self.box_N = box_N
         self.box_L = box_L
         self.box_dim = box_dim
-        self.spherical = spherical
+        self.mode = Box.__wrk_modes.index(mode)
 
         if box_dim == 1 :
             self.box = np.zeros((box_N, box_N, box_N),
@@ -72,6 +78,7 @@ class Box(object) :
 
         # call the compiled function
         err = Box.__voxelize(N_particles, self.box_N, self.box_L, self.box_dim,
-                             coordinates, radii, field, self.box, self.spherical)
+                             coordinates, radii, field, self.box,
+                             self.mode, Box.__PATHTONET)
         if err :
             raise RuntimeError('voxelize returned with non-zero exit code.')

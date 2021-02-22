@@ -1,3 +1,7 @@
+**UPDATE**: a new, better version of this code is available at
+[this repository](https://github.com/leanderthiele/voxelize).
+
+
 Installation
 ============
 

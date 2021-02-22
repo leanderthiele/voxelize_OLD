@@ -1,2 +1,3 @@
-include voxelize/PATHTOSO.txt
 include voxelize/MANGLEDNAME.txt
+include voxelize/libvoxelize.so
+include voxelize/interp_net.pt
